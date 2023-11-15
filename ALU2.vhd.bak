@@ -1,0 +1,66 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+ENTITY ALU2 IS
+PORT(
+	Clock : IN STD_LOGIC; -- input clock signal
+	A,B : IN UNSIGNED(7 DOWNTO 0); -- 8 bit inputs from latches A and B
+	student_id : IN UNSIGNED (3 DOWNTO 0); --4 bit student id from FSM
+	OP : IN UNSIGNED(15 DOWNTO 0); -- 16 bit selector for Operation from Decoder
+	Neg : OUT STD_LOGIC; -- is the result negative? set-ve bit output
+	R1 : OUT UNSIGNED (3 DOWNTO 0); -- lower 4 bits of 8 bit Result Output 
+	R2 : OUT UNSIGNED (3 DOWNTO 0)); -- higher 4 bits of 8-bit Result Output 
+END ALU2;
+
+ARCHITECTURE calculation OF ALU2 IS
+SIGNAL Reg1, Reg2, Result : UNSIGNED(7 DOWNTO 0):= (OTHERS =>'0');
+SIGNAL Reg4 : UNSIGNED(0 TO 7);
+BEGIN 
+Reg1 <= A; -- temporarily stores A in Reg1 local variable 
+Reg2 <= B; -- temporarily stores B in Reg2 local variable 
+PROCESS(Clock, OP)
+BEGIN 
+	IF(rising_edge(Clock)) THEN --Do the calculatiobn @ positive edge of clock cycle 
+		CASE OP IS
+			WHEN "0000000000000001"=> -- Do Addition for Reg1 and Reg2
+				Result <= Reg1 + Reg2;
+				Neg <= '0';
+			WHEN "0000000000000010"=> -- Do Subtraction 
+				IF(Reg1 >= Reg2) THEN
+					Result <= Reg1 + (not Reg2 +1);
+					Neg <= '1';
+				ELSE
+					Result <= Reg1 - Reg2;
+					Neg <= '0';
+				END IF;
+			WHEN "0000000000000100"=> -- inverse
+				Result <= NOT(Reg1);
+				Neg <= '0';
+			WHEN "0000000000001000"=> -- NAND
+				Result <= (NOT (Reg1 AND Reg2));
+				Neg <= '0';
+			WHEN "0000000000010000"=> -- NOR
+				Result <= (NOT (Reg1 OR Reg2));
+				Neg <= '0';
+			WHEN "0000000000100000"=> -- and
+				Result <= (Reg1 AND Reg2);
+				Neg<= '0';
+			WHEN "0000000001000000"=>-- xor
+				Result <= (Reg1 XOR Reg2);
+				Neg <= '0';
+			WHEN "0000000010000000"=> -- OR
+				Result <= (Reg1 OR Reg2);
+				Neg <= '0';
+			WHEN "0000000100000000"=> -- XNOR
+				Result <= (Reg1 XNOR Reg2);
+				Neg <= '0';
+			WHEN OTHERS =>
+				Result <= "00000000";
+				Neg <= '0';
+		END CASE;
+	END IF;
+END PROCESS;
+R1 <= Result(3 DOWNTO 0); --Since the output seven segments can
+R2 <= result(7 DOWNTO 4); --only 4-bits, split the 8-bot to two 4-bits
+END calculation;
